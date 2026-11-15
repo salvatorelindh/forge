@@ -138,7 +138,7 @@ function weekStreak() {
 }
 
 // ---------- UI plumbing ----------
-let tab = 'status', selEx = null, restStart = null, prevPct = 0, heatRange = 7, bodyView = 'front';
+let tab = 'status', selEx = null, restStart = null, heatRange = 7;
 
 // ---------- muscle heat map ----------
 // Heat = how much a muscle group has been worked in the window (0..1). Low heat shows red on the body map.
@@ -325,24 +325,50 @@ function vMore() {
 function creator() {
   const c = S.char;
   const pills = (opts, k) => opts.map(([v, l]) => `<button class="pill ${c[k] === v ? 'on' : ''}" data-act="cc" data-k="${k}" data-v="${v}">${l}</button>`).join('');
-  openSheet(`<h1>${c.created ? 'Edit profile' : 'Set up your profile'}</h1>
-    <p class="small mute" style="margin:0 0 6px">The body map follows your training. Drag to preview how it develops toward your goal.</p>
-    <div class="preview" id="pcv"></div>
-    <label id="pvl"></label>
-    <input type="range" id="pv" min="0" max="100" value="${prevPct}" class="range">
+  openSheet(`${c.created || isStandalone() ? '' : '<div class="stepno">Step 2 of 2</div>'}<h1>${c.created ? 'Edit profile' : 'Set up your profile'}</h1>
+    <p class="small mute" style="margin:0 0 6px">Your goal shapes how progress is measured. You can change this any time in Profile.</p>
     <label>Name</label><input id="cname" value="${esc(c.name)}" maxlength="20" autocomplete="off" placeholder="Your name">
     <label>Body</label><div>${pills([['m', 'Male'], ['f', 'Female']], 'sex')}</div>
     <label>Goal</label>
     ${Object.entries(GOALS).map(([k, g]) => `<button class="goal ${c.goal === k ? 'on' : ''}" data-act="cc" data-k="goal" data-v="${k}"><b>${g.label}</b><span>${g.desc}</span></button>`).join('')}
     <div style="height:14px"></div><button class="btn" data-act="saveChar">${c.created ? 'Save' : 'Get started'}</button>`);
-  drawPreview();
 }
-function drawPreview() {
-  const el = document.getElementById('pcv'); if (!el) return;
-  const p = prevPct / 100, sc = prevPct > 0 ? { STR: p, PUL: p, LEG: p, COR: p } : scores();
-  el.innerHTML = bodySVG('front', { ch: S.char, sc, width: 92 }) + bodySVG('back', { ch: S.char, sc, width: 92 });
-  document.getElementById('pvl').textContent = prevPct > 0 ? `Preview: ${prevPct}% of goal` : 'Preview: you right now';
+
+// ---------- first run: add to home screen, then profile ----------
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const platform = () => {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+  return /Android/.test(ua) ? 'android' : 'desktop';
+};
+let installEvt = null;   // Chrome/Android hands us an install prompt we can trigger from our own button
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; const b = document.getElementById('instBtn'); if (b) b.hidden = false; });
+window.addEventListener('appinstalled', () => { installEvt = null; if (!S.char.created) installDone(); });
+const ICON_SHARE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>';
+const ICON_ADD = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+const ICON_DOTS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>';
+function installGuide() {
+  const pf = platform();
+  const steps = pf === 'ios' ? [
+    [ICON_SHARE, 'Tap the <b>Share</b> button', 'In Safari it\'s at the bottom of the screen (top right on iPad).'],
+    [ICON_ADD, 'Choose <b>Add to Home Screen</b>', 'Scroll down the share sheet if you don\'t see it.'],
+    ['<img src="icon-180.png" alt="" width="22" height="22" style="border-radius:6px">', 'Open FORGE from your home screen', 'Set up your profile there. Data saved in Safari doesn\'t carry over to the home-screen app.'],
+  ] : pf === 'android' ? [
+    [ICON_DOTS, 'Tap the <b>⋮</b> menu in Chrome', 'Top right of the screen.'],
+    [ICON_ADD, 'Choose <b>Install app</b> or <b>Add to Home screen</b>', ''],
+    ['<img src="icon-180.png" alt="" width="22" height="22" style="border-radius:6px">', 'Open FORGE from your home screen', 'It runs full screen and works offline.'],
+  ] : [
+    [ICON_ADD, 'Open this page on your phone', 'FORGE is built for your phone: you log sets at the gym.'],
+    [ICON_SHARE, 'Add it to your home screen', 'iPhone: Share → Add to Home Screen. Android: ⋮ → Install app.'],
+  ];
+  openSheet(`<div class="stepno">Step 1 of 2</div><h1>Add FORGE to your home screen</h1>
+    <p class="small mute" style="margin:0 0 18px">It opens like a normal app, works offline at the gym, and keeps your data safe on this device.</p>
+    <div class="steps">${steps.map(([ic, t, d], k) => `<div class="step"><span class="ic">${ic}</span><div><div>${k + 1}. ${t}</div>${d ? `<div class="small mute">${d}</div>` : ''}</div></div>`).join('')}</div>
+    <button class="btn" id="instBtn" data-act="install" ${installEvt ? '' : 'hidden'} style="margin-top:18px">Install FORGE</button>
+    <button class="btn sec" data-act="skipInstall" style="margin-top:10px">${pf === 'ios' ? 'I\'ll do it later — continue in Safari' : 'Continue in browser'}</button>`);
 }
+function installDone() { creator(); }
+function onboarding() { if (isStandalone()) creator(); else installGuide(); }
 
 // ---------- charts ----------
 function bars(vals, labels) {
@@ -451,6 +477,8 @@ document.addEventListener('click', ev => {
     case 'unit': S.settings.unit = d.u; save(); render(); break;
     case 'weekly': S.settings.weekly = +d.n; save(); render(); break;
     case 'editChar': creator(); break;
+    case 'install': if (installEvt) { installEvt.prompt(); installEvt.userChoice.then(r => { installEvt = null; if (r.outcome === 'accepted') toast('Installed — open FORGE from your home screen'); }); } break;
+    case 'skipInstall': creator(); break;
     case 'cc': {
       const k = d.k, v = d.v;
       const nm = document.getElementById('cname'); if (nm) S.char.name = nm.value.trim();
@@ -465,11 +493,8 @@ document.addEventListener('click', ev => {
       const l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = `forge-backup-${new Date().toISOString().slice(0, 10)}.json`; l.click(); break;
     }
     case 'import': document.getElementById('file').click(); break;
-    case 'reset': if (confirm('Erase ALL sessions and settings? This cannot be undone.') && confirm('Really erase everything?')) { S = defaultState(); save(); render(); creator(); } break;
+    case 'reset': if (confirm('Erase ALL sessions and settings? This cannot be undone.') && confirm('Really erase everything?')) { S = defaultState(); save(); render(); onboarding(); } break;
   }
-});
-document.addEventListener('input', ev => {
-  if (ev.target.id === 'pv') { prevPct = +ev.target.value; drawPreview(); }
 });
 document.addEventListener('change', ev => {
   const t = ev.target;
@@ -498,5 +523,5 @@ setInterval(() => {
 }, 1000);
 
 render();
-if (!S.char.created) creator();
+if (!S.char.created) onboarding();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

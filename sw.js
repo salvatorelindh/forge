@@ -1,5 +1,5 @@
 // Offline cache. Bump VERSION whenever you change any file so phones pick up the update.
-const VERSION = 'forge-v20';
+const VERSION = 'forge-v21';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'figure.js', 'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
