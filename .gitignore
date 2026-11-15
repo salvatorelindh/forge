@@ -1,0 +1,6 @@
+# only the app itself is published; notes, dev server and editor settings stay local
+HANDOFF.md
+serve.py
+.claude/
+dist/
+.DS_Store
