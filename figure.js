@@ -5,10 +5,9 @@
 
 // m = how much muscle the goal builds, bf = body fat the figure drifts toward as you progress
 const GOALS = {
-  muscle:   { label: 'Build muscle', desc: 'Add size and density.',          m: 1.0,  bf: 0.35, tiers: ['Starting out', 'Lean', 'Muscular', 'Strong build', 'Elite build'] },
-  lean:     { label: 'Get lean',     desc: 'Lose fat, keep muscle.',         m: 0.55, bf: 0.0,  tiers: ['Starting out', 'Toned', 'Fit', 'Defined', 'Shredded'] },
-  athletic: { label: 'Athletic',     desc: 'Balanced strength and fitness.', m: 0.75, bf: 0.12, tiers: ['Starting out', 'Active', 'Athletic', 'Conditioned', 'Elite'] },
-  strength: { label: 'Strength',     desc: 'Move heavier weight.',           m: 0.9,  bf: 0.6,  tiers: ['Starting out', 'Solid', 'Strong', 'Powerful', 'Elite'] },
+  muscle:   { label: 'Get huge',     desc: 'Pack on as much muscle as possible.', m: 1.0,  bf: 0.35, tiers: ['Starting out', 'Lean', 'Muscular', 'Big', 'Huge'] },
+  lean:     { label: 'Get lean',     desc: 'Lose fat, keep muscle, look defined.', m: 0.55, bf: 0.0,  tiers: ['Starting out', 'Toned', 'Fit', 'Defined', 'Shredded'] },
+  athletic: { label: 'Get athletic', desc: 'Balanced strength, size and fitness.', m: 0.75, bf: 0.12, tiers: ['Starting out', 'Active', 'Athletic', 'Conditioned', 'Elite'] },
 };
 function physiqueInfo(ch, sc) {
   const g = GOALS[ch.goal] || GOALS.athletic, overall = (sc.STR + sc.PUL + sc.LEG + sc.COR) / 4;
